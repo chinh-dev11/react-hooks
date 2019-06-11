@@ -42,27 +42,46 @@ const todo = props => {
     // REM: 
     /**
      * - useEffect() hooks into the React internals and ensures that the code will be executed after rendering cycle (render())
-     * - useEffect() runs after every render cycle, unlike componentDidMount(), thus it creates an infinite loop; with the code below, the render cycle is running at every state change and every state change causes a render cycle
+     * - useEffect() 
+     *      - runs after every render cycle, unlike componentDidMount(), thus it creates an infinite loop; with the code below, the render cycle is running at every state change and every state change causes a render cycle
      *      - to prevent infinite loop, use the 2nd argument that passes to useEffect(), of which only the change of its value will re-execute the callback (1st argument)
      *      - pass en empty array to execute the callback (1st argument) only once thus prevent infinite loop, since useEffect() has nothing compare with for re-execute the callback (1st argument) 
+     *      - 1st argument (callback)
+     *      - 2nd argument (input array)
+     *          - [] (empty): effect (callback) will only activate once - mounting the component
+     *          - [someInput]: effect (callback) will only activate if the values in the list change
+     *          - no argument: effect (callback) will run for every render cycle
      */
     useEffect(() => {
         axios.get('https://react16-hooks.firebaseio.com/todos.json')
             .then(res => {
-                console.log('res: ', res);
+                // console.log('res: ', res);
                 // and for example changing the state once request resolved...
                 const todoData = res.data;
-                console.log('todoData: ', todoData);
+                // console.log('todoData: ', todoData);
                 let todos = [];
-                for(const k in todoData) {
-                    console.log('k: ', k);
-                    todos.push({id: k, name: todoData[k].name});
+                for (const k in todoData) {
+                    // console.log('k: ', k);
+                    todos.push({ id: k, name: todoData[k].name });
                 }
-                console.log('todos: ', todos);
+                // console.log('todos: ', todos);
                 setTodoList(todos);
             });
     }, []); // REM: pass en empty array to execute the callback (1st argument) only once (as componentDidMount() in class-based) thus prevent infinite loop, since useEffect() has nothing compare with for re-execute the callback (1st argument) - as with componentDidMount() in class-based
     // }, [todoName]); // REM: for example: passing 'todoName' as 2nd argument, every change in the input field will cause an execution of the callback (1st argument) - as with componentDidMount() + componentDidUpdate() with an if check included in it
+    // }; // REM: no 2nd argument: will run for every render cycle 
+
+    const mouseMoveHandler = (evt) => {
+        console.log('x: ', evt.clientX, ' y: ', evt.clientY);
+    };
+    useEffect(() => {
+        console.log('effect - runs...');
+        document.addEventListener('mousemove', mouseMoveHandler);
+        return () => { // cleanup before effect (callback) activates (executes)
+            console.log('effect - cleanup...');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+        };
+    });
 
     const inputChangeHandler = (evt) => {
         // console.log('evt: ', evt.target.value);
@@ -84,11 +103,9 @@ const todo = props => {
         axios.post('https://react16-hooks.firebaseio.com/todos.json', { name: todoName })
             .then(res => {
                 console.log('res: ', res);
-
             })
             .catch(err => {
                 console.log('err: ', err);
-
             });
     };
 
