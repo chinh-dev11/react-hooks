@@ -14,10 +14,18 @@ const todo = props => {
     // const inputState = useState('someValue');
     // console.log('inputState: ', inputState);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [todoList, setTodoList] = useState([]);
+    // console.log('todoList: ', todoList);
+
     const inputChangeHandler = (evt) => {
         // console.log('evt: ', evt.target.value);
         setTodoName(evt.target.value);
         // inputState[1](evt.target.value);
+    };
+
+    const todoAddHandler = () => {
+        setTodoList(todoList.concat(todoName)); // add new element (todoName) to the todoList state array
     };
 
     return (
@@ -26,8 +34,10 @@ const todo = props => {
             <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoName} /> {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={inputState[0]} /> */} {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={this.inputUserHandler} value={this.state.todoValue} /> */} {/* class-based component */}
-            <button type="button">Add</button>
-            <ul />
+            <button type="button" onClick={todoAddHandler}>Add</button>
+            <ul>
+                {todoList.map(todo => <li key={todo}>{todo}</li>)}
+            </ul>
         </React.Fragment>
     );
 };
