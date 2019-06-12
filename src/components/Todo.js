@@ -77,7 +77,7 @@ const todo = props => {
     useEffect(() => {
         console.log('effect - runs...');
         document.addEventListener('mousemove', mouseMoveHandler);
-        return () => { // cleanup before effect (callback) activates (executes)
+        return () => { // REM: cleanup before effect (callback) activates (executes) - as componentDidUnmount()
             console.log('effect - cleanup...');
             document.removeEventListener('mousemove', mouseMoveHandler);
         };
