@@ -2,7 +2,7 @@
 // React Hook "useState" is called in function "todo" which is neither a React function component or a custom React Hook function.eslint(react-hooks/rules-of-hooks)
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer, useRef } from 'react';
 import axios from 'axios';
 
 const todo = props => {
@@ -16,7 +16,7 @@ const todo = props => {
      *     Recommended: use useState() separately to manipulate different states (todoName, todoList), hence state changes are independent from one of the other
     */
     const [todoName, setTodoName] = useState('');
-    console.log('todoName: ', todoName);
+    // console.log('todoName: ', todoName);
     // const inputState = useState('');
     // console.log('inputState: ', inputState);
 
@@ -55,6 +55,9 @@ const todo = props => {
 
     const [todoList, dispatch] = useReducer(todoListReducer, []);
     console.log('todoList: ', todoList);
+
+    const todoInputRef = useRef(); // REM: using the useRef() internal state management, to extract the current value of the input element. It refers to the current html element
+    console.log('todoInputRef: ', todoInputRef);
 
 
     // REM: avoid to run any code that causes side-effects or manual DOM manipulating during React rendering cycle, as the following, since it might cause:
@@ -140,6 +143,9 @@ const todo = props => {
             todoList: todoState.todoList.concat(todoState.userInput)
         }); */
 
+        const todoName = todoInputRef.current.value;
+        console.log('todoName: ', todoName);
+
         axios.post('https://react16-hooks.firebaseio.com/todos.json', { name: todoName })
             .then(res => {
                 console.log('res: ', res);
@@ -174,11 +180,19 @@ const todo = props => {
     return (
         // React.Fragment: allows top level siblings 
         <React.Fragment>
+            <input
+                type="text"
+                placeholder="Todo"
+                /* onChange={inputChangeHandler}
+                value={todoName} */ /** commented out to use todoInputRef of useRef() */
+                ref={todoInputRef}
+            /> {/* functional component */}
+            {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoName} /> */} {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoState.userInput} /> */} {/* functional component */}
-            <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoName} /> {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={inputState[0]} /> */} {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={this.inputUserHandler} value={this.state.todoValue} /> */} {/* class-based component */}
             <button type="button" onClick={todoAddHandler}>Add</button>
+            <p>NOTE: simulated server latency of 5secs with setTimeout!</p>
             <ul>
                 {/* {todoState.todoList.map(todo => <li key={todo}>{todo}</li>)} */}
                 {/* {todoList.map(todo => <li key={todo.id} onClick={() => todoRemoveHandler(todo.id)}>{todo.name}</li>)} */} {/** OR */}
