@@ -6,6 +6,7 @@ import React, { useState, useEffect, useReducer, useRef, useMemo } from 'react';
 
 import axios from 'axios';
 import List from './List';
+import { useFormInput } from '../hooks/forms';
 
 const todo = props => {
     console.log('[todo] rendering...');
@@ -63,6 +64,7 @@ const todo = props => {
     const todoInputRef = useRef(); // REM: using the useRef() internal state management, to extract the current value of the input element. It refers to the current html element
     // console.log('todoInputRef: ', todoInputRef);
 
+    const todoInput = useFormInput(); // custom hook
 
     // REM: avoid to run any code that causes side-effects or manual DOM manipulating during React rendering cycle, as the following, since it might cause:
     /**
@@ -147,7 +149,8 @@ const todo = props => {
             todoList: todoState.todoList.concat(todoState.userInput)
         }); */
 
-        const todoName = todoInputRef.current.value;
+        // const todoName = todoInputRef.current.value; // commented out to use custom hook useFormInput()
+        const todoName = todoInput.value; 
         console.log('todoName: ', todoName);
 
         axios.post('https://react16-hooks.firebaseio.com/todos.json', { name: todoName })
@@ -197,10 +200,13 @@ const todo = props => {
                 type="text"
                 placeholder="Todo"
                 /* onChange={inputChangeHandler}
-                value={todoName} */ /** commented out to use todoInputRef of useRef() */
-                ref={todoInputRef}
-                onChange={inputValidationHandler}
-                style={{ backgroundColor: inputIsValid ? 'transparent' : 'red' }}
+                value={todoName} */ /* commented out to use todoInputRef of useRef() */
+                /* ref={todoInputRef}
+                onChange={inputValidationHandler} */ /* commented out to use custom hook useFormInput() */
+                /* style={{ backgroundColor: inputIsValid ? 'transparent' : 'red' }} */ /* commented out to use custom hook useFormInput() */
+                onChange={todoInput.onChange}
+                value={todoInput.value}
+                style={{ backgroundColor: todoInput.validity ? 'transparent' : 'red' }}
             /> {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoName} /> */} {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoState.userInput} /> */} {/* functional component */}
