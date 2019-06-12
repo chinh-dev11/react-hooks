@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // React Hook "useState" is called in function "todo" which is neither a React function component or a custom React Hook function.eslint(react-hooks/rules-of-hooks)
 /* eslint-disable react-hooks/rules-of-hooks */
 
@@ -21,6 +22,8 @@ const todo = props => {
 
     const [todoList, setTodoList] = useState([]);
     // console.log('todoList: ', todoList);
+
+    const [submittedTodo, setSubmittedTodo] = useState(null);
 
     // merging different states in one - NOT RECOMMENDED!!!
     // REM: the hook (setTodoState) does update but NOT MERGE the states therefore requires manual merging (as in todoAddHandler()), unlike setSate() in class-based component
@@ -83,6 +86,13 @@ const todo = props => {
         };
     });
 
+    // REM: using useEffect() and checking submittedTodo to prevent any lost of entries added in case of slow response (5s simulated) from the server
+    useEffect(() => {
+        if (submittedTodo) {
+            setTodoList(todoList.concat(submittedTodo)); // add new element (todoItem) to the todoList state array
+        }
+    }, [submittedTodo]);
+
     const inputChangeHandler = (evt) => {
         // console.log('evt: ', evt.target.value);
         /* setTodoState({
@@ -98,11 +108,19 @@ const todo = props => {
             userInput: todoState.userInput,
             todoList: todoState.todoList.concat(todoState.userInput)
         }); */
-        setTodoList(todoList.concat(todoName)); // add new element (todoName) to the todoList state array
 
         axios.post('https://react16-hooks.firebaseio.com/todos.json', { name: todoName })
             .then(res => {
                 console.log('res: ', res);
+                setTimeout(() => {
+                    const todoItem = {
+                        id: res.data.name,
+                        name: todoName
+                    };
+                    // setTodoList(todoList.concat(todoItem)); // add new element (todoItem) to the todoList state array
+                    setSubmittedTodo(todoItem); // REM: adding item to submittedTodo state and then check submittedTodo in useEffect to ensure entries were added correctly without any entries lost
+                }, 5000); // to simulate a longer response (5s) from the server, which will result in loosing entries that were added rapidly to the todoList
+                
             })
             .catch(err => {
                 console.log('err: ', err);
