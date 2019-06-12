@@ -2,7 +2,7 @@
 // React Hook "useState" is called in function "todo" which is neither a React function component or a custom React Hook function.eslint(react-hooks/rules-of-hooks)
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import axios from 'axios';
 
 const todo = props => {
@@ -20,7 +20,7 @@ const todo = props => {
     // const inputState = useState('');
     // console.log('inputState: ', inputState);
 
-    const [todoList, setTodoList] = useState([]);
+    // const [todoList, setTodoList] = useState([]); // commented out to use useReducer() instead
     // console.log('todoList: ', todoList);
 
     const [submittedTodo, setSubmittedTodo] = useState(null);
@@ -32,6 +32,31 @@ const todo = props => {
         todoList: []
     }); */
 
+
+    // REM: useReducer()
+    /**
+     * Reducer: allow to bundle the logic to updating the states in one simple function, independent to Redux, and more powerful than useState()
+     * @param {*} state the latest state to add based on the action
+     * @param {*} action an object with information about what to do
+     * @return the latest state of the list (todoList), after action applied
+     */
+    const todoListReducer = (state, action) => {
+        switch (action.type) {
+            case 'SET':
+                return action.payload;
+            case 'ADD':
+                return state.concat(action.payload);
+            case 'REMOVE':
+                return state.filter((todo) => todo.id !== action.payload);
+            default:
+                return state;
+        }
+    };
+
+    const [todoList, dispatch] = useReducer(todoListReducer, []);
+    console.log('todoList: ', todoList);
+
+
     // REM: avoid to run any code that causes side-effects or manual DOM manipulating during React rendering cycle, as the following, since it might cause:
     /**
      *      - undesirable behavior (UI is not updated bc React has already completed its rendering cycle when request resolved)
@@ -42,7 +67,7 @@ const todo = props => {
             console.log('res: ', res);
             // and for example changing the state once request resolved...
         }); */
-    // REM: 
+    // REM: useEffect()
     /**
      * - useEffect() hooks into the React internals and ensures that the code will be executed after rendering cycle (render())
      * - useEffect() 
@@ -68,7 +93,11 @@ const todo = props => {
                     todos.push({ id: k, name: todoData[k].name });
                 }
                 // console.log('todos: ', todos);
-                setTodoList(todos);
+                // setTodoList(todos);// commented out to use useReducer() instead
+                dispatch({ type: 'SET', payload: todos })
+            })
+            .catch(err => {
+                console.log('err: ', err);
             });
     }, []); // REM: pass en empty array to execute the callback (1st argument) only once (as componentDidMount() in class-based) thus prevent infinite loop, since useEffect() has nothing compare with for re-execute the callback (1st argument) - as with componentDidMount() in class-based
     // }, [todoName]); // REM: for example: passing 'todoName' as 2nd argument, every change in the input field will cause an execution of the callback (1st argument) - as with componentDidMount() + componentDidUpdate() with an if check included in it
@@ -89,7 +118,9 @@ const todo = props => {
     // REM: using useEffect() and checking submittedTodo to prevent any lost of entries added in case of slow response (5s simulated) from the server
     useEffect(() => {
         if (submittedTodo) {
-            setTodoList(todoList.concat(submittedTodo)); // add new element (todoItem) to the todoList state array
+            // add new element (todoItem) to the todoList state array
+            // setTodoList(todoList.concat(submittedTodo)); // commented out to use useReducer() instead 
+            dispatch({ type: 'ADD', payload: submittedTodo });
         }
     }, [submittedTodo]);
 
@@ -118,9 +149,22 @@ const todo = props => {
                         name: todoName
                     };
                     // setTodoList(todoList.concat(todoItem)); // add new element (todoItem) to the todoList state array
-                    setSubmittedTodo(todoItem); // REM: adding item to submittedTodo state and then check submittedTodo in useEffect to ensure entries were added correctly without any entries lost
+                    // setSubmittedTodo(todoItem); // REM: adding item to submittedTodo state and then check submittedTodo in useEffect to ensure entries were added correctly without any entries lost due to simulated server latency
+                    dispatch({ type: 'ADD', payload: todoItem }); // REM: useReducer() is much simpler, instead of useEffect() - submittedTodo, to ensure entries were added correctly without any entries lost due to simulated server latency, since reducer always takes the latest state snapshot
                 }, 5000); // to simulate a longer response (5s) from the server, which will result in loosing entries that were added rapidly to the todoList
-                
+
+            })
+            .catch(err => {
+                console.log('err: ', err);
+            });
+    };
+
+    const todoRemoveHandler = (todoId) => {
+        axios.delete(`https://react16-hooks.firebaseio.com/todos/${todoId}.json`) // OR
+            // axios.delete('https://react16-hooks.firebaseio.com/todos/' + todoId + '.json')
+            .then(res => {
+                console.log('res: ', res);
+                dispatch({ type: 'REMOVE', payload: todoId });
             })
             .catch(err => {
                 console.log('err: ', err);
@@ -137,7 +181,8 @@ const todo = props => {
             <button type="button" onClick={todoAddHandler}>Add</button>
             <ul>
                 {/* {todoState.todoList.map(todo => <li key={todo}>{todo}</li>)} */}
-                {todoList.map(todo => <li key={todo.id}>{todo.name}</li>)}
+                {/* {todoList.map(todo => <li key={todo.id} onClick={() => todoRemoveHandler(todo.id)}>{todo.name}</li>)} */} {/** OR */}
+                {todoList.map(todo => <li key={todo.id} onClick={todoRemoveHandler.bind(this, todo.id)}>{todo.name}</li>)}
             </ul>
         </React.Fragment>
     );
