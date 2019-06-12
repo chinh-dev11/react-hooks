@@ -2,10 +2,13 @@
 // React Hook "useState" is called in function "todo" which is neither a React function component or a custom React Hook function.eslint(react-hooks/rules-of-hooks)
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import React, { useState, useEffect, useReducer, useRef } from 'react';
+import React, { useState, useEffect, useReducer, useRef, useMemo } from 'react';
+
 import axios from 'axios';
+import List from './List';
 
 const todo = props => {
+    console.log('[todo] rendering...');
     // REM: useState() 
     /**    
      *     argument (eg: ''):  can be anything ('', 0, null, [], {},...)
@@ -32,6 +35,7 @@ const todo = props => {
         todoList: []
     }); */
 
+    const [inputIsValid, setInputIsValid] = useState(false);
 
     // REM: useReducer()
     /**
@@ -54,10 +58,10 @@ const todo = props => {
     };
 
     const [todoList, dispatch] = useReducer(todoListReducer, []);
-    console.log('todoList: ', todoList);
+    // console.log('todoList: ', todoList);
 
     const todoInputRef = useRef(); // REM: using the useRef() internal state management, to extract the current value of the input element. It refers to the current html element
-    console.log('todoInputRef: ', todoInputRef);
+    // console.log('todoInputRef: ', todoInputRef);
 
 
     // REM: avoid to run any code that causes side-effects or manual DOM manipulating during React rendering cycle, as the following, since it might cause:
@@ -107,13 +111,13 @@ const todo = props => {
     // }; // REM: no 2nd argument: will run for every render cycle 
 
     const mouseMoveHandler = (evt) => {
-        console.log('x: ', evt.clientX, ' y: ', evt.clientY);
+        // console.log('x: ', evt.clientX, ' y: ', evt.clientY);
     };
     useEffect(() => {
-        console.log('effect - runs...');
+        // console.log('effect - runs...');
         document.addEventListener('mousemove', mouseMoveHandler);
         return () => { // REM: cleanup before effect (callback) activates (executes) - as componentDidUnmount()
-            console.log('effect - cleanup...');
+            // console.log('effect - cleanup...');
             document.removeEventListener('mousemove', mouseMoveHandler);
         };
     });
@@ -169,12 +173,21 @@ const todo = props => {
         axios.delete(`https://react16-hooks.firebaseio.com/todos/${todoId}.json`) // OR
             // axios.delete('https://react16-hooks.firebaseio.com/todos/' + todoId + '.json')
             .then(res => {
-                console.log('res: ', res);
+                // console.log('res: ', res);
                 dispatch({ type: 'REMOVE', payload: todoId });
             })
             .catch(err => {
                 console.log('err: ', err);
             });
+    };
+
+    const inputValidationHandler = (evt) => {
+        // console.log('evt: ', evt);
+        if (evt.target.value.trim() === '') {
+            setInputIsValid(false);
+        } else {
+            setInputIsValid(true);
+        }
     };
 
     return (
@@ -186,6 +199,8 @@ const todo = props => {
                 /* onChange={inputChangeHandler}
                 value={todoName} */ /** commented out to use todoInputRef of useRef() */
                 ref={todoInputRef}
+                onChange={inputValidationHandler}
+                style={{ backgroundColor: inputIsValid ? 'transparent' : 'red' }}
             /> {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoName} /> */} {/* functional component */}
             {/* <input type="text" placeholder="Todo" onChange={inputChangeHandler} value={todoState.userInput} /> */} {/* functional component */}
@@ -193,11 +208,19 @@ const todo = props => {
             {/* <input type="text" placeholder="Todo" onChange={this.inputUserHandler} value={this.state.todoValue} /> */} {/* class-based component */}
             <button type="button" onClick={todoAddHandler}>Add</button>
             <p>NOTE: simulated server latency of 5secs with setTimeout!</p>
-            <ul>
-                {/* {todoState.todoList.map(todo => <li key={todo}>{todo}</li>)} */}
-                {/* {todoList.map(todo => <li key={todo.id} onClick={() => todoRemoveHandler(todo.id)}>{todo.name}</li>)} */} {/** OR */}
-                {todoList.map(todo => <li key={todo.id} onClick={todoRemoveHandler.bind(this, todo.id)}>{todo.name}</li>)}
-            </ul>
+            {/* <ul> */}
+            {/* {todoState.todoList.map(todo => <li key={todo}>{todo}</li>)} */}
+            {/* {todoList.map(todo => <li key={todo.id} onClick={() => todoRemoveHandler(todo.id)}>{todo.name}</li>)} */} {/** OR */}
+            {/* {todoList.map(todo => <li key={todo.id} onClick={todoRemoveHandler.bind(this, todo.id)}>{todo.name}</li>)} */}
+            {/* </ul> */}
+            {/* <List items={todoList} clicked={todoRemoveHandler} /> */}
+            {/* useMemo(): 
+                    - cached/stored the 1st argument (<List... />), and re-render it only if the 2nd argument (todoList) changed, and not every change of any state in the component 
+                    - can be used for any logic or calculation, not only for JSX code
+            */}
+            {useMemo(() => (
+                <List items={todoList} clicked={todoRemoveHandler} />
+            ), [todoList])}
         </React.Fragment>
     );
 };
